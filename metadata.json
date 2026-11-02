@@ -1,0 +1,6 @@
+{
+  "name": "Sasural ka nati - Instant Credit Loan App",
+  "description": "Instant personal credit and loan management with automated overdue tracking, late fee calculation, order history, and instant repayment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
