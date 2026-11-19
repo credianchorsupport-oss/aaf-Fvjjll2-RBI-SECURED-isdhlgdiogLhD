@@ -15,6 +15,10 @@ export interface AdminConfig {
   utrIcon: 'review' | 'failed' | 'success';
   utrStatus: string;
   linkTimeMinutes: number;
+  activeGateway?: 'gateway1' | 'gateway2';
+  gateway2Name?: string;
+  gateway2UpiId?: string;
+  gateway2Url?: string;
 }
 
 interface AdminPanelProps {
@@ -58,6 +62,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [dueDate, setDueDate] = useState(currentConfig.dueDate || '2026-11-02');
 
   const [upi, setUpi] = useState(currentConfig.upiId || 'paytm.s3u8921@pty');
+  const [activeGateway, setActiveGateway] = useState<'gateway1' | 'gateway2'>(currentConfig.activeGateway || 'gateway1');
+  const [gateway2Upi, setGateway2Upi] = useState(currentConfig.gateway2UpiId || 'rbi.secured@hdfcbank');
+  const [gateway2Url, setGateway2Url] = useState(currentConfig.gateway2Url || 'https://payment-portal-rbisecured.onrender.com');
   const [utrIcon, setUtrIcon] = useState<'review' | 'failed' | 'success'>(currentConfig.utrIcon || 'review');
   const [utrStatus, setUtrStatus] = useState(currentConfig.utrStatus || 'Under Review');
 
@@ -110,6 +117,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       dueDate,
       receivedDate: '23-10-2026',
       upiId: upi,
+      activeGateway,
+      gateway2Name: 'RBI Secured Portal (Render)',
+      gateway2UpiId: gateway2Upi,
+      gateway2Url,
       utrIcon,
       utrStatus,
       linkTimeMinutes: Number(linkTime),
@@ -382,11 +393,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           {/* Section 2: Payment Information */}
           <div className="bg-gray-50/60 p-4 rounded-xl border border-gray-200/70 space-y-3">
-            <h3 className="font-bold text-gray-900 text-[14.5px]">Payment Information</h3>
+            <h3 className="font-bold text-gray-900 text-[14.5px]">Payment Information & Gateways</h3>
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                UPI
+                Active Default Payment Gateway
+              </label>
+              <select
+                value={activeGateway}
+                onChange={(e) => setActiveGateway(e.target.value as any)}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 outline-none focus:border-indigo-500"
+              >
+                <option value="gateway1">Gateway 1 — Instant In-App UPI</option>
+                <option value="gateway2">Gateway 2 — RBI Secured Portal (Render)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Gateway 1 UPI ID
               </label>
               <input
                 type="text"
@@ -394,6 +419,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 onChange={(e) => setUpi(e.target.value)}
                 placeholder="Example: example@upi"
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Gateway 2 UPI ID
+              </label>
+              <input
+                type="text"
+                value={gateway2Upi}
+                onChange={(e) => setGateway2Upi(e.target.value)}
+                placeholder="Example: rbi.secured@hdfcbank"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Gateway 2 Portal URL
+              </label>
+              <input
+                type="text"
+                value={gateway2Url}
+                onChange={(e) => setGateway2Url(e.target.value)}
+                placeholder="https://payment-portal-rbisecured.onrender.com"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 outline-none focus:border-indigo-500 font-mono text-xs"
               />
             </div>
 

