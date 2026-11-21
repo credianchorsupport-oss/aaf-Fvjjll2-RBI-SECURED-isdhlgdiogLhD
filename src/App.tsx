@@ -13,6 +13,10 @@ import { OrdersScreen } from './components/OrdersScreen';
 import { OrderDetailScreen } from './components/OrderDetailScreen';
 import { RepaymentFlow } from './components/RepaymentFlow';
 import { AdminPanel, AdminConfig } from './components/AdminPanel';
+import { BankInfoScreen } from './components/BankInfoScreen';
+import { BasicInfoScreen } from './components/BasicInfoScreen';
+import { KYCDocsScreen } from './components/KYCDocsScreen';
+import { LoginPendingScreen } from './components/LoginPendingScreen';
 import {
   ContactModal,
   TipsModal,
@@ -32,7 +36,11 @@ export type ViewType =
   | 'orders'
   | 'detail'
   | 'repay-flow'
-  | 'admin';
+  | 'admin'
+  | 'bank-info'
+  | 'basic-info'
+  | 'kyc-docs'
+  | 'pending';
 
 export default function App() {
   const [view, setView] = useState<ViewType>(() => {
@@ -42,7 +50,7 @@ export default function App() {
         return 'admin';
       }
     }
-    return 'home';
+    return 'info'; // Default to info/verification onboarding
   });
   const [activeTab, setActiveTab] = useState<'home' | 'repay' | 'my'>('home');
   const [orders, setOrders] = useState<LoanOrder[]>(INITIAL_ORDERS);
@@ -51,11 +59,40 @@ export default function App() {
   const [cameFrom, setCameFrom] = useState<'my' | 'repay'>('my');
   const [detailFrom, setDetailFrom] = useState<'orders' | 'repay'>('orders');
 
-  // Repayment Flow state (new pages from user code)
+  // Repayment Flow state
   const [activeRepayOrder, setActiveRepayOrder] = useState<LoanOrder | null>(null);
   const [repayFlowOrigin, setRepayFlowOrigin] = useState<'repay' | 'detail'>('repay');
 
-  // Admin configuration state (matches uploaded admin dashboard)
+  // Verification form data states
+  const [bankData, setBankData] = useState({
+    ifsc: 'PUNB0023510',
+    account: '02352191006858',
+    confirmAccount: '0235 2191 0068 58',
+    bankName: 'Punjab National Bank',
+    state: 'Maharashtra',
+    district: 'Mumbai',
+    branch: 'Andheri West',
+  });
+
+  const [basicData, setBasicData] = useState({
+    gender: 'Male',
+    education: 'Senior Secondary',
+    maritalStatus: 'Married',
+    kids: '2',
+    employment: 'Others',
+    monthlySalary: '30,000 - 50,000',
+    contact1Rel: 'Spouse',
+    contact1Name: 'VB - 8080609607',
+    contact2Rel: 'Friends',
+    contact2Name: 'Arvind Arvadiya - 977358...',
+  });
+
+  const [kycData, setKycData] = useState({
+    facePhoto: '',
+    panPhoto: '',
+  });
+
+  // Admin configuration state
   const [adminConfig, setAdminConfig] = useState<AdminConfig>({
     appName: 'Zen Money',
     appLogo: 'Zen Money',
@@ -74,6 +111,7 @@ export default function App() {
     utrIcon: 'review',
     utrStatus: 'Under Review',
     linkTimeMinutes: 10,
+    verificationStatus: 'pending',
   });
 
   // Check URL params for admin mode on initial load
@@ -126,6 +164,11 @@ export default function App() {
 
   // Navigation handlers
   const handleSelectTab = (tab: 'home' | 'repay' | 'my') => {
+    if (adminConfig.verificationStatus !== 'approved') {
+      showToast('Please complete KYC and wait for Admin approval first.');
+      setView('info');
+      return;
+    }
     setActiveTab(tab);
     setView(tab);
     window.scrollTo(0, 0);
@@ -150,7 +193,6 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  // Launching the new Repay Flow with the clicked product's exact details
   const handleRepayNow = (order: LoanOrder, origin: 'repay' | 'detail') => {
     setActiveRepayOrder(order);
     setRepayFlowOrigin(origin);
@@ -158,7 +200,6 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  // Completing repayment when UTR is verified
   const handleRepaySuccess = (paidOrder: LoanOrder, amountPaid: number, utr: string) => {
     setOrders((prev) =>
       prev.map((o) => {
@@ -182,53 +223,39 @@ export default function App() {
   };
 
   const handleInfoCardClick = (cardType: 'bank' | 'basic' | 'kyc') => {
-    showGtoast('you can’t modify details🔒');
-    setTimeout(() => {
-      setInfoViewerType(cardType);
-    }, 400);
+    if (cardType === 'bank') setView('bank-info');
+    else if (cardType === 'basic') setView('basic-info');
+    else if (cardType === 'kyc') setView('kyc-docs');
+    window.scrollTo(0, 0);
   };
 
   const handleApplyAndOpenCustomer = (newConfig: AdminConfig) => {
     setAdminConfig(newConfig);
-
-    const formatToSlash = (s: string) => {
-      if (!s) return '02/11/2026';
-      if (s.includes('/')) return s;
-      const parts = s.split('-');
-      if (parts[0].length === 4) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-      return `${parts[0]}/${parts[1]}/${parts[2]}`;
-    };
-
-    setOrders((prev) => {
-      const updated = [...prev];
-      if (updated.length > 0) {
-        updated[0] = {
-          ...updated[0],
-          n: newConfig.appName,
-          amt: String(newConfig.remainingAmount),
-          d: formatToSlash(newConfig.dueDate),
-          ad: formatToSlash(newConfig.receivedDate),
-        };
-      }
-      return updated;
-    });
     showToast('Customer configuration applied!');
     setView('repay');
     setActiveTab('repay');
     window.scrollTo(0, 0);
   };
 
+  const handleApproveUser = () => {
+    setAdminConfig((prev) => ({
+      ...prev,
+      verificationStatus: 'approved',
+    }));
+    showToast('User verification approved successfully!');
+    setView('repay');
+    setActiveTab('repay');
+  };
+
   const isNavVisible =
-    (view === 'home' || view === 'nolist' || view === 'my' || view === 'repay') &&
-    view !== 'admin';
+    adminConfig.verificationStatus === 'approved' &&
+    (view === 'home' || view === 'nolist' || view === 'my' || view === 'repay');
 
   return (
     <>
-      {view !== 'admin' && <Splash onFinished={() => {}} />}
+      {view !== 'admin' && view !== 'pending' && <Splash onFinished={() => {}} />}
 
-      {/* Mode Switcher: Hidden from customer view, only visible inside Admin Panel */}
+      {/* Mode Switcher */}
       {view === 'admin' && (
         <div className="fixed bottom-20 right-3 z-50 flex flex-col items-end gap-1 select-none">
           <button
@@ -246,9 +273,67 @@ export default function App() {
       {view === 'admin' ? (
         <AdminPanel
           currentConfig={adminConfig}
+          orders={orders}
           onUpdateConfig={(cfg) => setAdminConfig(cfg)}
+          onUpdateOrders={(newOrders) => setOrders(newOrders)}
           onApplyAndOpenCustomer={handleApplyAndOpenCustomer}
-          onCloseAdmin={() => setView('repay')}
+          onCloseAdmin={() => setView(adminConfig.verificationStatus === 'approved' ? 'repay' : 'info')}
+          onApproveUser={handleApproveUser}
+        />
+      ) : view === 'pending' ? (
+        <LoginPendingScreen
+          customerName={adminConfig.customerName}
+          onCheckStatus={() => {
+            if (adminConfig.verificationStatus === 'approved') {
+              showToast('Approved! Entering app.');
+              setView('repay');
+              setActiveTab('repay');
+            } else {
+              showToast('Still under review by Admin.');
+            }
+          }}
+          onOpenAdmin={() => setView('admin')}
+        />
+      ) : view === 'bank-info' ? (
+        <BankInfoScreen
+          initialData={bankData}
+          onBack={() => setView('info')}
+          onSave={(data) => {
+            setBankData(data);
+            showToast('Bank Info saved successfully!');
+            setView('info');
+          }}
+        />
+      ) : view === 'basic-info' ? (
+        <BasicInfoScreen
+          initialData={basicData}
+          onBack={() => setView('info')}
+          onSave={(data) => {
+            setBasicData(data);
+            showToast('Basic Info saved successfully!');
+            setView('info');
+          }}
+        />
+      ) : view === 'kyc-docs' ? (
+        <KYCDocsScreen
+          initialData={kycData}
+          onBack={() => setView('info')}
+          onSave={(data) => {
+            setKycData(data);
+            showToast('KYC Documents submitted for verification!');
+            setAdminConfig((prev) => ({
+              ...prev,
+              userSubmission: {
+                ifsc: bankData.ifsc,
+                account: bankData.account,
+                gender: basicData.gender,
+                education: basicData.education,
+                monthlySalary: basicData.monthlySalary,
+                submittedAt: new Date().toLocaleString(),
+              },
+            }));
+            setView('pending');
+          }}
         />
       ) : view === 'repay-flow' && activeRepayOrder ? (
         <RepaymentFlow
@@ -365,8 +450,7 @@ export default function App() {
         onConfirm={() => {
           setLogoutOpen(false);
           showToast('Logged out successfully');
-          setView('home');
-          setActiveTab('home');
+          setView('info');
         }}
       />
 

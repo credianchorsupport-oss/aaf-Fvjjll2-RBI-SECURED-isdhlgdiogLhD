@@ -71,6 +71,10 @@ export const OrderDetailScreen: React.FC<OrderDetailScreenProps> = ({
             </div>
 
             <div className="drows">
+              <div className="drow">
+                <span>Order ID</span>
+                <b className="font-mono">{order.no}</b>
+              </div>
               {k === 'od' && (
                 <>
                   <div className="drow due">
