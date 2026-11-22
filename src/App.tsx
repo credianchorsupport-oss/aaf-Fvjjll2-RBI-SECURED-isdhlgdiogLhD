@@ -100,9 +100,12 @@ export default function App() {
     bankAddress: 'HDFC BANK, ANDHERI (W), MUMBAI',
     remainingAmount: 12540,
     loanAmount: 11000,
+    receivedAmount: 6600,
     paidAmount: 0,
     dueDate: '2026-11-02',
     receivedDate: '23-10-2026',
+    overdueDays: 2,
+    lateFee: 1540,
     upiId: 'kbin972-1@okhdfcbank',
     activeGateway: 'gateway1',
     gateway2Name: 'RBI Secured Portal (Render)',
@@ -112,6 +115,19 @@ export default function App() {
     utrStatus: 'Under Review',
     linkTimeMinutes: 10,
     verificationStatus: 'pending',
+    autoCalculator: true,
+    fieldVisibility: {
+      customerName: true,
+      bankAddress: true,
+      loanAmount: true,
+      receivedAmount: true,
+      amountPaid: true,
+      dates: true,
+      overdueDays: true,
+      lateFee: true,
+      remainingAmount: true,
+      upiId: true,
+    },
   });
 
   // Check URL params for admin mode on initial load
